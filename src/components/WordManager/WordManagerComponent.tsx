@@ -200,16 +200,15 @@ const WordManagerComponent = () => {
     }
   }
 
-  const getWordClassByID = async (wordToGet: IMeaning):Promise<IWord_class> => {
+  const getWordClassByID = async (meaning: IMeaning):Promise<IWord_class> => {
     try {
-      const word: IRequest<IWord_class[]> = await requester({
-        url: `/wordClasses/${wordToGet.id_topic}`,
+      const wordClass: IRequest<IWord_class[]> = await requester({
+        url: `/wordClasses/${meaning.id_word_class}`,
         method: 'GET'
       })
-
-      if(word.response.statusCode === 200) 
-        if(word.response.response !== undefined) {
-          return word.response.response[0];
+      if(wordClass.response.statusCode === 200) 
+        if(wordClass.response.response !== undefined) {
+          return wordClass.response.response[0];
         }
       
       dispatch(enqueueAlert({alertData: {
@@ -511,6 +510,7 @@ const WordManagerComponent = () => {
           <div className='flex flex-row justify-center mb-5'>
             <SearchWord onSelectItem={(item:IWord) => {
               getWordById(item).then((response:IWord[]) => {
+                resetMeaning()
                 setWord(response[0]);
               })
               setMeaning({...meaning, id_word: item.id_word})
@@ -779,7 +779,6 @@ const WordManagerComponent = () => {
                                       onClick={() => {
                                         getMeaningById(currentMeaning)
                                         .then((response) => {
-                                          
                                           getTopicByID(currentMeaning)
                                           .then((responseTopic)=> {
                                             setTopic(responseTopic);
@@ -787,6 +786,7 @@ const WordManagerComponent = () => {
 
                                           getWordClassByID(currentMeaning)
                                           .then((responseTopic)=> {
+                                            console.log(responseTopic);
                                             setWordClasses(responseTopic);
                                           })
 
