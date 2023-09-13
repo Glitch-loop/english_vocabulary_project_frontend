@@ -39,10 +39,15 @@ const TopicManagerComponent = () => {
   }, []);
 
   // Calls to API
-  const addTopic = async (newTopic: ITopic):Promise<ITopic[]> => {
+  const addTopic = async (newTopic: ITopic):Promise<IRequest<ITopic>> => {
+    const failedRequest:IRequest<ITopic> = {
+      success: false,
+      response: {
+        statusCode: 500  
+      }
+    } 
     try {
-      console.log(newTopic)
-      const topic: IRequest<ITopic[]> = await requester({
+      const topic: IRequest<ITopic> = await requester({
         url: `/topics`,
         method: 'POST',
         data: newTopic
@@ -53,18 +58,18 @@ const TopicManagerComponent = () => {
           dispatch(enqueueAlert({alertData: {
             alertType: EAlert.success, 
             message: "The topic has been added successfully"}})); 
-          return topic.response.response;
+          return topic;
         }
       
       dispatch(enqueueAlert({alertData: {
         alertType: EAlert.warning, 
         message: "There has been an error saving the topic"}})); 
-      return [];
+      return topic;
     } catch (error) {
       dispatch(enqueueAlert({alertData: {
         alertType: EAlert.error, 
         message: "There has been an error connectiong to the server, try later"}})); 
-      return [];
+      return failedRequest;
     }
   }
 
@@ -174,8 +179,13 @@ const TopicManagerComponent = () => {
 
   // Handlers
   const handleOnAddTopic = async ():Promise<void> => { 
-    await addTopic(topic)
-    reset()
+    const responseTopic:IRequest<ITopic> =  await addTopic(topic);
+    if(responseTopic.success === true && responseTopic.response.response !== undefined) {
+      const newTopic:ITopic = responseTopic.response.response;
+      setAlltopic([newTopic, ...allTopics]);
+      reset();
+
+    }
   }
 
   const handleOnUpdateTopic = async ():Promise<void> => { 

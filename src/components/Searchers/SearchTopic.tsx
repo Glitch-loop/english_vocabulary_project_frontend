@@ -8,8 +8,16 @@ import { EAlert } from "../../Interfaces/enums";
 import { enqueueAlert } from "../../redux/slices/appSlice";
 
 const SearchTopic = (
-  { onSelectItem}:
-  { onSelectItem:any}) => {
+  { 
+    onSelectItem
+    // ,
+    // initialValue
+  }:
+  { 
+    onSelectItem:any
+    // ,
+    // initialValue:ITopic
+   }) => {
   const [searchItem, setSearchItem] = useState<ITopic[]>([]);
   const [storeResponseSearchItem, setStoreResponseSearchItem] = useState<ITopic[]>([]);
   const [itemSelected, setItemSelected] = useState<boolean>(false);
