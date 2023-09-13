@@ -7,21 +7,42 @@ import { useDispatch } from 'react-redux';
 import { EAlert } from "../../Interfaces/enums";
 import { enqueueAlert } from "../../redux/slices/appSlice";
 
+
+const initialValueFunction = (initialValue:ITopic|undefined):ITopic[] => {
+  if(initialValue !== undefined) {
+    if(initialValue.id_topic !== 0) {
+      return [ initialValue ]
+    }
+  }
+  
+  return [];
+}
+
+const initialValueSelectedFunction = (initialValue:ITopic|undefined):boolean => {
+  if(initialValue !== undefined) {
+    if(initialValue.id_topic !== 0) {
+      return true
+    }
+  }
+  return false;
+}
+
+
 const SearchTopic = (
   { 
-    onSelectItem
-    // ,
-    // initialValue
+    onSelectItem,
+    initialValue
   }:
   { 
-    onSelectItem:any
-    // ,
-    // initialValue:ITopic
+    onSelectItem:any,
+    initialValue:ITopic
    }) => {
-  const [searchItem, setSearchItem] = useState<ITopic[]>([]);
-  const [storeResponseSearchItem, setStoreResponseSearchItem] = useState<ITopic[]>([]);
-  const [itemSelected, setItemSelected] = useState<boolean>(false);
-  const [userInput, setUserInput] = useState<string>();
+  const [searchItem, setSearchItem] 
+    = useState<ITopic[]>(initialValueFunction(initialValue));
+  const [storeResponseSearchItem, setStoreResponseSearchItem] 
+    = useState<ITopic[]>(initialValueFunction(initialValue));
+  const [itemSelected, setItemSelected]
+    = useState<boolean>(initialValueSelectedFunction(initialValue));
 
   const dispatch:Dispatch<AnyAction> = useDispatch();
 
@@ -52,12 +73,10 @@ const SearchTopic = (
 
   const onSearchType = async(event: any, stringToSearch: string|null) => {
     if(stringToSearch === "" || stringToSearch === null) {
-      setUserInput("");
       setStoreResponseSearchItem([]);
       setSearchItem([]);
       setItemSelected(false); //User erase the item selected
     } else {
-      setUserInput(stringToSearch);
       if(storeResponseSearchItem[0] !== undefined) {
         const re = new RegExp(`^${stringToSearch.toLowerCase()}[a-zA-Z0-9\ \d\D]*`);
       
@@ -85,17 +104,13 @@ const SearchTopic = (
     const findDataItem:undefined|ITopic = storeResponseSearchItem
       .find(item => item.topic_name === optionSelected);
     
-    if(optionSelected !== null) {
-      setUserInput(optionSelected);
-    }
-
     if(findDataItem !== undefined) {
       //User selected an item
-      setItemSelected(true);
+      setItemSelected(initialValueSelectedFunction(initialValue));
 
       // Reset states
-      setSearchItem([]);
-      setStoreResponseSearchItem([]);
+      setSearchItem(initialValueFunction(initialValue));
+      setStoreResponseSearchItem(initialValueFunction(initialValue));
 
       //Return search results      
       onSelectItem(findDataItem);
@@ -113,7 +128,7 @@ const SearchTopic = (
           onChange={(event: any, newValue: string | null) => 
             selectOption(event, newValue) }
           value={
-            userInput
+            initialValue.topic_name
           }
           options={ searchItem.map((item => item.topic_name)) }
           sx={{ width: 300 }}

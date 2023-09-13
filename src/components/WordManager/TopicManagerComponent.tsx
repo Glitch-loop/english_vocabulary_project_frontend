@@ -214,7 +214,9 @@ const TopicManagerComponent = () => {
       <div className='flex flex-col'>
         <div className='flex flex-col w-full'>
           <div className='flex flex-row justify-center mb-5'>
-            <SearchTopic onSelectItem={setTopic} />
+            <SearchTopic 
+              initialValue={initialTopic}
+              onSelectItem={setTopic} />
           </div>
           <div className="flex flex-col">
             <p className="text-lg font-bold text-center">

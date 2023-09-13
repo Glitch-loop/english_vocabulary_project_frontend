@@ -44,6 +44,11 @@ const initialExample:IExample = {
   id_meaning: 0
 }
 
+const initialTopic:ITopic = {
+  id_topic: 0,
+  topic_name: ""
+}
+
 const WordManagerComponent = () => {
   const [word, setWord] = useState<IWord>(initialWord);
   const [meaning, setMeaning] = useState<IMeaning>(initialMeaning);
@@ -51,6 +56,8 @@ const WordManagerComponent = () => {
   const [manageMeaning, setManageMeaning] = useState<boolean>(false);
   const [manageExample, setManageExample] = useState<boolean>(false);
 
+  const [topic, setTopic] = useState<ITopic>(initialTopic);
+  
   //Reducers to alerts
   const dispatch:Dispatch<AnyAction> = useDispatch();
 
@@ -162,6 +169,29 @@ const WordManagerComponent = () => {
     }
   }
 
+  const getTopicByID = async (wordToGet: IMeaning):Promise<ITopic> => {
+    try {
+      const word: IRequest<ITopic[]> = await requester({
+        url: `/topics/${wordToGet.id_topic}`,
+        method: 'GET'
+      })
+
+      if(word.response.statusCode === 200) 
+        if(word.response.response !== undefined) {
+          return word.response.response[0];
+        }
+      
+      dispatch(enqueueAlert({alertData: {
+        alertType: EAlert.warning, 
+        message: "There has been an error getting the topic"}})); 
+      return initialTopic;
+    } catch (error) {
+      dispatch(enqueueAlert({alertData: {
+        alertType: EAlert.error, 
+        message: "There has been an error connectiong to the server, try later"}})); 
+      return initialTopic;
+    }
+  }
   const addMeaning = async (newWord: IMeaning):Promise<IRequest<IMeaning>> => {
     const failedResponse:IRequest<IMeaning> = {
       success: false,
@@ -433,6 +463,7 @@ const WordManagerComponent = () => {
   const resetMeaning = ():void => {
     setMeaning(initialMeaning);
     setExample(initialExample);
+    setTopic(initialTopic);
     setManageMeaning(false);
   }
 
@@ -534,7 +565,9 @@ const WordManagerComponent = () => {
                 <SearchTopic 
                   onSelectItem={(item:ITopic) => { 
                     setMeaning({...meaning, id_topic: item.id_topic})
-                  }} />
+                  }} 
+                  initialValue={topic}
+                  />
               </div>
               <SearchWordClasses onSelectItem={(item:IWord_class) => { 
                 setMeaning({...meaning, id_word_class: item.id_word_class})
@@ -709,7 +742,12 @@ const WordManagerComponent = () => {
                                       onClick={() => {
                                         getMeaningById(currentMeaning)
                                         .then((response) => {
-                                          console.log(response)
+                                          
+                                          getTopicByID(currentMeaning)
+                                          .then((responseTopic)=> {
+                                            setTopic(responseTopic);
+                                          })
+
                                           setMeaning(response[0]);
                                           setExample({...example, id_meaning: currentMeaning.id_meaning});
                                           setManageMeaning(true);
