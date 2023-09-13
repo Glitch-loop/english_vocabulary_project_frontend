@@ -7,11 +7,41 @@ import { useDispatch } from 'react-redux';
 import { EAlert } from "../../Interfaces/enums";
 import { enqueueAlert } from "../../redux/slices/appSlice";
 
-const SearchWordClasses = ({onSelectItem}:{onSelectItem:any}) => {
-  const [searchItem, setSearchItem] = useState<IWord_class[]>([]);
-  const [storeResponseSearchItem, setStoreResponseSearchItem] = useState<IWord_class[]>([]);
-  const [itemSelected, setItemSelected] = useState<boolean>(false);
-  const [userInput, setUserInput] = useState<string>("");
+const initialValueFunction = (initialValue:IWord_class|undefined):IWord_class[] => {
+  if(initialValue !== undefined) {
+    if(initialValue.id_word_class !== 0) {
+      return [ initialValue ]
+    }
+  }
+  
+  return [];
+}
+
+const initialValueSelectedFunction = (initialValue:IWord_class|undefined):boolean => {
+  if(initialValue !== undefined) {
+    if(initialValue.id_word_class !== 0) {
+      return true
+    }
+  }
+  return false;
+}
+const SearchWordClasses = (
+  { 
+    onSelectItem,
+    initialValue
+  }:
+  { 
+    onSelectItem:any,
+    initialValue:IWord_class
+   }
+) => {
+  const [searchItem, setSearchItem] 
+    = useState<IWord_class[]>(initialValueFunction(initialValue));
+  const [storeResponseSearchItem, setStoreResponseSearchItem] 
+    = useState<IWord_class[]>(initialValueFunction(initialValue));
+  const [itemSelected, setItemSelected] 
+    = useState<boolean>(initialValueSelectedFunction(initialValue));
+  // const [userInput, setUserInput] = useState<string>("");
 
   const dispatch:Dispatch<AnyAction> = useDispatch();
 
@@ -51,12 +81,10 @@ const SearchWordClasses = ({onSelectItem}:{onSelectItem:any}) => {
 
   const onSearchType = async(event: any, stringToSearch: string|null) => {
     if(stringToSearch === "" || stringToSearch === null) {
-      setUserInput("");
       setStoreResponseSearchItem([]);
       setSearchItem([]);
       setItemSelected(false); //User erase the item selected
     } else {
-      setUserInput(stringToSearch);
       if(storeResponseSearchItem[0] !== undefined) {
         const re = new RegExp(`^${stringToSearch.toLowerCase()}[a-zA-Z0-9\ \d\D]*`);
       
@@ -85,10 +113,6 @@ const SearchWordClasses = ({onSelectItem}:{onSelectItem:any}) => {
     const findDataItem:undefined|IWord_class = storeResponseSearchItem
       .find(item => item.word_class === optionSelected);
     
-    if(optionSelected !== null) {
-      setUserInput(optionSelected);
-    }
-
     if(findDataItem !== undefined) {
       //User selected an item
       setItemSelected(true);
@@ -113,7 +137,7 @@ const SearchWordClasses = ({onSelectItem}:{onSelectItem:any}) => {
           onChange={(event: any, newValue: string | null) => 
             { selectOption(event, newValue) }}
           value={
-            userInput
+            initialValue.word_class
           }
           options={ searchItem.map((item => item.word_class)) }
           sx={{ width: 300 }}

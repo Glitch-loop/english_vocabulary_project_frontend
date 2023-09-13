@@ -49,6 +49,12 @@ const initialTopic:ITopic = {
   topic_name: ""
 }
 
+const initialWordClass:IWord_class = {
+  id_word_class: 0,
+  word_class: "",
+  language: undefined
+}
+
 const WordManagerComponent = () => {
   const [word, setWord] = useState<IWord>(initialWord);
   const [meaning, setMeaning] = useState<IMeaning>(initialMeaning);
@@ -57,6 +63,7 @@ const WordManagerComponent = () => {
   const [manageExample, setManageExample] = useState<boolean>(false);
 
   const [topic, setTopic] = useState<ITopic>(initialTopic);
+  const [wordClasses, setWordClasses] = useState<IWord_class>(initialWordClass);
   
   //Reducers to alerts
   const dispatch:Dispatch<AnyAction> = useDispatch();
@@ -192,6 +199,31 @@ const WordManagerComponent = () => {
       return initialTopic;
     }
   }
+
+  const getWordClassByID = async (wordToGet: IMeaning):Promise<IWord_class> => {
+    try {
+      const word: IRequest<IWord_class[]> = await requester({
+        url: `/wordClasses/${wordToGet.id_topic}`,
+        method: 'GET'
+      })
+
+      if(word.response.statusCode === 200) 
+        if(word.response.response !== undefined) {
+          return word.response.response[0];
+        }
+      
+      dispatch(enqueueAlert({alertData: {
+        alertType: EAlert.warning, 
+        message: "There has been an error getting the topic"}})); 
+      return initialWordClass;
+    } catch (error) {
+      dispatch(enqueueAlert({alertData: {
+        alertType: EAlert.error, 
+        message: "There has been an error connectiong to the server, try later"}})); 
+      return initialWordClass;
+    }
+  }
+
   const addMeaning = async (newWord: IMeaning):Promise<IRequest<IMeaning>> => {
     const failedResponse:IRequest<IMeaning> = {
       success: false,
@@ -285,7 +317,6 @@ const WordManagerComponent = () => {
       }
     }
     try {
-      console.log(newExample);
       const word: IRequest<IExample> = await requester({
         url: `/meanings/examples/${newExample.id_meaning}`,
         method: 'POST',
@@ -305,7 +336,6 @@ const WordManagerComponent = () => {
         message: "There has been an error saving the example"}})); 
       return word
     } catch (error) {
-      console.log(error)
       dispatch(enqueueAlert({alertData: {
         alertType: EAlert.error, 
         message: "There has been an error connectiong to the server, try later"}})); 
@@ -458,12 +488,15 @@ const WordManagerComponent = () => {
     setWord(initialWord);
     setMeaning(initialMeaning);
     setExample(initialExample);
+    setTopic(initialTopic);
+    setWordClasses(initialWordClass);
   }
 
   const resetMeaning = ():void => {
     setMeaning(initialMeaning);
     setExample(initialExample);
     setTopic(initialTopic);
+    setWordClasses(initialWordClass);
     setManageMeaning(false);
   }
 
@@ -564,14 +597,18 @@ const WordManagerComponent = () => {
               <div className='mr-3'>
                 <SearchTopic 
                   onSelectItem={(item:ITopic) => { 
-                    setMeaning({...meaning, id_topic: item.id_topic})
+                    setMeaning({...meaning, id_topic: item.id_topic});
+                    setTopic(item);
                   }} 
                   initialValue={topic}
                   />
               </div>
               <SearchWordClasses onSelectItem={(item:IWord_class) => { 
                 setMeaning({...meaning, id_word_class: item.id_word_class})
-              }} />
+                setWordClasses(item);
+                }}
+                initialValue={wordClasses}
+               />
             </div>
             <div className='flex flex-row justify-center'>
               { !manageMeaning ?
@@ -746,6 +783,11 @@ const WordManagerComponent = () => {
                                           getTopicByID(currentMeaning)
                                           .then((responseTopic)=> {
                                             setTopic(responseTopic);
+                                          })
+
+                                          getWordClassByID(currentMeaning)
+                                          .then((responseTopic)=> {
+                                            setWordClasses(responseTopic);
                                           })
 
                                           setMeaning(response[0]);
