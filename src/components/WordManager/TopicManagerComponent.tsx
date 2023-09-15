@@ -210,7 +210,7 @@ const TopicManagerComponent = () => {
     setTopic(initialTopic);
   }
 
-  return(<>
+  return(
       <div className='flex flex-col'>
         <div className='flex flex-col w-full'>
           <div className='flex flex-row justify-center mb-5'>
@@ -311,7 +311,7 @@ const TopicManagerComponent = () => {
           </div>
         </div>
       </div>
-  </>)
+  )
 }
 
 export default TopicManagerComponent;

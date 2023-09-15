@@ -26,6 +26,7 @@ const initialWord:IWord = {
   word: "",
   meanings: []
 }
+
 const initialMeaning:IMeaning = {
   id_meaning: 0,
   meaning: "",

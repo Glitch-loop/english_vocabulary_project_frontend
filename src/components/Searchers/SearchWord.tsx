@@ -48,7 +48,6 @@ const SearchWord = ({onSelectItem}:{onSelectItem:any}) => {
       setItemSelected(false); //User erase the item selected
     } else {
       setUserInput(stringToSearch);
-      console.log(storeResponseSearchItem);
       if(storeResponseSearchItem[0] !== undefined) {
         const re = new RegExp(`^${stringToSearch.toLowerCase()}[a-zA-Z0-9\ \d\D]*`);
       
