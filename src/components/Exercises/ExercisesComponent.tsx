@@ -41,7 +41,8 @@ const getSetToPlay = (amountSet:number, maximumValue:number, currentIndex:number
   const setWordsToPlay:IWord[] = [];
   const usedNumbers:number[] = [];
 
-  const positionCorrectAnswer:number = randomNumber(amountSet);
+  const positionCorrectAnswer:number = randomNumber(amountSet - 1);
+  console.log("Correct answer: ", currentIndex)
   console.log("Correct answer: ", positionCorrectAnswer - 1)
   let index:number = 0;
   while(index < amountSet) {
@@ -84,7 +85,7 @@ const ExercisesComponent = () => {
         "idTopic": topics.id_topic, 
         "idWordClass": wordClasses.id_word_class, 
         "lessStudiedWord": lessStudiedWords, 
-        "numberWords": 10
+        "numberWords": numberWords
       }
       const word: IRequest<IWord[]> = await requester({
         url: `/activities`,
@@ -172,9 +173,9 @@ const ExercisesComponent = () => {
                 onSendAnswer={handleOnAssessAnswer}
                 currentWord={activity[questionNumber - 1]}/>:
               <ChooseTheImage 
-                onSendAnswer={handleOnAssessAnswer}
-                setOfWords={getSetToPlay(3, activity.length - 1, questionNumber - 1, activity)}
-                currentWord={activity[questionNumber - 1]}
+                  currentWord={activity[questionNumber - 1]}
+                  setOfWords={getSetToPlay(3, activity.length - 1, questionNumber - 1, activity)}
+                  onSendAnswer={handleOnAssessAnswer}
                 />
             }
           </div>

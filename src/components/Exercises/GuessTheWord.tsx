@@ -96,7 +96,7 @@ const GuessTheWord = ({
 
   // Handlers
   const handleOnTryAttempt = ():void => {
-    if(attempt.toLowerCase() === currentWord.word) {
+    if(attempt.toLowerCase() === currentWord.word.toLocaleLowerCase()) {
       onSendAnswer();
       setStrike("");
       setStrikeCount(0);
