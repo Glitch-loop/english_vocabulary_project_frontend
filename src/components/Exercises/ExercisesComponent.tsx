@@ -41,8 +41,8 @@ const getSetToPlay = (amountSet:number, maximumValue:number, currentIndex:number
   const setWordsToPlay:IWord[] = [];
   const usedNumbers:number[] = [];
 
-  const positionCorrectAnswer:number = randomNumber(amountSet - 1);
-
+  const positionCorrectAnswer:number = randomNumber(amountSet);
+  console.log("Correct answer: ", positionCorrectAnswer - 1)
   let index:number = 0;
   while(index < amountSet) {
     
@@ -58,7 +58,7 @@ const getSetToPlay = (amountSet:number, maximumValue:number, currentIndex:number
       }
     }
   }
-  
+  // console.log("Word selected: ", setWordsToPlay)
   return setWordsToPlay;
 }
 
@@ -81,9 +81,9 @@ const ExercisesComponent = () => {
   const getActivity = async ():Promise<IWord[]> => {
     try {
       const data:any = {
-        "idTopic": 0, 
-        "idWordClass": 0, 
-        "lessStudiedWord": false, 
+        "idTopic": topics.id_topic, 
+        "idWordClass": wordClasses.id_word_class, 
+        "lessStudiedWord": lessStudiedWords, 
         "numberWords": 10
       }
       const word: IRequest<IWord[]> = await requester({
@@ -97,7 +97,7 @@ const ExercisesComponent = () => {
         if(word.response.response !== undefined) {
           return word.response.response;
         }
-      
+
       dispatch(enqueueAlert({alertData: {
         alertType: EAlert.warning, 
         message: "There has been an error getting the topic"}})); 
@@ -164,7 +164,6 @@ const ExercisesComponent = () => {
               </div>
           </div>
         }
-        
         { inActivity &&
           <div>
             <div className='text-center text-2xl'>{questionNumber} / { activity.length }</div>
@@ -174,7 +173,7 @@ const ExercisesComponent = () => {
                 currentWord={activity[questionNumber - 1]}/>:
               <ChooseTheImage 
                 onSendAnswer={handleOnAssessAnswer}
-                setOfWords={getSetToPlay(3, activity.length - 1, questionNumber - 1, activity,)}
+                setOfWords={getSetToPlay(3, activity.length - 1, questionNumber - 1, activity)}
                 currentWord={activity[questionNumber - 1]}
                 />
             }

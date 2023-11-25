@@ -11,6 +11,24 @@ export interface IApp {
   queueAlert: IAlert[];
 }
 
+export interface IGif {
+  type: string;
+  id: string;
+  slug: string;
+  url: string;
+  bitly_url: string;
+  embed_url: string;
+  username: string;
+  source: string;
+  rating: string;
+  content_url: string;
+  source_tld: string;
+  source_post_url: string;
+  title: string;
+  alt_text: string;
+  image: any;
+}
+
 export interface ILanguage {
   id_language: number;
   language_name: string;
@@ -66,4 +84,11 @@ interface IResponse<T> {
 export interface IRequest<T> {
   success: boolean,
   response: IResponse<T>
+}
+
+export interface IImportWordExcel {
+  word: string;
+  meaning: string;
+  id_topic: number;
+  id_word_class: number;
 }

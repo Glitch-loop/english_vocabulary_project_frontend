@@ -102,7 +102,7 @@ const SearchTopic = (
 
   const selectOption = async (event: any, optionSelected: string|null):Promise<void> => {
     const findDataItem:undefined|ITopic = storeResponseSearchItem
-      .find(item => item.topic_name === optionSelected);
+      .find(item => item.topic_name.toLowerCase() === optionSelected?.toLowerCase());
     
     if(findDataItem !== undefined) {
       //User selected an item
@@ -128,9 +128,12 @@ const SearchTopic = (
           onChange={(event: any, newValue: string | null) => 
             selectOption(event, newValue) }
           value={
-            initialValue.topic_name
+            initialValue.topic_name.length > 0 ?
+              initialValue.topic_name[0].toUpperCase() + initialValue.topic_name.slice(1):
+              initialValue.topic_name
           }
-          options={ searchItem.map((item => item.topic_name)) }
+          options={ searchItem.map((item => 
+            item.topic_name[0].toUpperCase() + item.topic_name.slice(1))) }
           sx={{ width: 300 }}
           renderInput={(params) => <TextField {...params} label="Search topic" />}
           />

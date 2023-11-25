@@ -3,7 +3,8 @@ import requester from "../../helpers/Requester";
 import { EAlert } from "../../Interfaces/enums";
 import { enqueueAlert } from "../../redux/slices/appSlice";
 import { Dispatch, AnyAction } from 'redux';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../../redux/store';
 import { IRequest, ITopic } from "../../Interfaces/interfaces";
 
 
@@ -19,6 +20,8 @@ import { Input, Button } from "@mui/material";
 
 import SearchTopic from '../Searchers/SearchTopic';
 import { failedResponse } from '../../utils/genericResponses';
+import { AnimatePresence } from 'framer-motion';
+import ToastAlert from '../UIcomponents/ToastAlert';
 
 const initialTopic:ITopic = {
   id_topic: 0,
@@ -31,6 +34,7 @@ const TopicManagerComponent = () => {
 
   //Reducers to alerts
   const dispatch:Dispatch<AnyAction> = useDispatch();
+  const appData = useSelector((state: RootState) => state.appReducer);
 
   useEffect(() => {
     getAllTopic().then((response) => {
@@ -73,7 +77,13 @@ const TopicManagerComponent = () => {
     }
   }
 
-  const updateTopic = async (updateTopic: ITopic):Promise<ITopic[]> => {
+  const updateTopic = async (updateTopic: ITopic):Promise<IRequest<ITopic[]>> => {
+    const responseFailed:IRequest<ITopic[]> = {
+      success: false,
+      response: {
+        statusCode: 500  
+      }
+    }
     try {
       const topic: IRequest<ITopic[]> = await requester({
         url: `/topics/${updateTopic.id_topic}`,
@@ -86,18 +96,18 @@ const TopicManagerComponent = () => {
           dispatch(enqueueAlert({alertData: {
             alertType: EAlert.success, 
             message: "The topic has been updated successfully"}})); 
-          return topic.response.response;
+          return topic;
         }
       
       dispatch(enqueueAlert({alertData: {
         alertType: EAlert.warning, 
         message: "There has been an error updating the topic"}})); 
-      return [];
+      return responseFailed;
     } catch (error) {
       dispatch(enqueueAlert({alertData: {
         alertType: EAlert.error, 
         message: "There has been an error connectiong to the server, try later"}})); 
-      return [];
+      return responseFailed;
     }
   }
 
@@ -175,21 +185,43 @@ const TopicManagerComponent = () => {
     }
   }
 
-
-
   // Handlers
   const handleOnAddTopic = async ():Promise<void> => { 
     const responseTopic:IRequest<ITopic> =  await addTopic(topic);
     if(responseTopic.success === true && responseTopic.response.response !== undefined) {
       const newTopic:ITopic = responseTopic.response.response;
-      setAlltopic([newTopic, ...allTopics]);
-      reset();
 
+      allTopics.push(newTopic);
+
+      const allTopicsSorted = allTopics.sort(function(a:ITopic,b:ITopic) {
+        if(a.topic_name > b.topic_name) return 1;
+        if(a.topic_name < b.topic_name) return -1;
+        return 0;
+      })
+
+      setAlltopic(allTopicsSorted);
+      reset();
     }
   }
 
   const handleOnUpdateTopic = async ():Promise<void> => { 
-    await updateTopic(topic)
+    const response:IRequest<ITopic[]> = await updateTopic(topic)
+    if(response.response.statusCode === 200) {
+      const newTopics:ITopic[] = allTopics.map( (currentTopic:ITopic) => {
+        if(currentTopic.id_topic === topic.id_topic) {
+          currentTopic.id_topic = topic.id_topic;
+          currentTopic.topic_name = topic.topic_name;
+          return currentTopic;
+        } else return currentTopic;
+      })
+
+      const allTopicsSorted = newTopics.sort((a:ITopic,b:ITopic) => {
+        if(a.topic_name > b.topic_name) return 1;
+        if(a.topic_name < b.topic_name) return -1;
+        return 0;
+      })
+      setAlltopic(allTopicsSorted);
+    }
     reset()
   }
 
@@ -212,6 +244,11 @@ const TopicManagerComponent = () => {
 
   return(
       <div className='flex flex-col'>
+        <AnimatePresence mode='wait'>
+          { appData.currentAlert &&
+            <ToastAlert alertData={appData.currentAlert}/>
+          }
+        </AnimatePresence>
         <div className='flex flex-col w-full'>
           <div className='flex flex-row justify-center mb-5'>
             <SearchTopic 
@@ -245,17 +282,17 @@ const TopicManagerComponent = () => {
                   Update topic
                 </Button>
                 <div className='mx-3'>
+                  <Button variant="contained" color="info" onClick={():any => {
+                    reset()
+                  }}>
+                    Cancel
+                  </Button>
+                </div>
                   <Button variant="contained" color="error" onClick={():any => {
                     handleOnDeleteTopic(topic)
                   }}>
                     Delete topic
                   </Button>
-                </div>
-                <Button variant="contained" color="info" onClick={():any => {
-                  reset()
-                }}>
-                  Cancel
-                </Button>
               </div>
             }
           </div>
@@ -265,6 +302,9 @@ const TopicManagerComponent = () => {
                 <Table>
                   <TableHead>
                     <TableRow>
+                      <TableCell align="center">
+                        ID 
+                      </TableCell>
                       <TableCell align="center">
                         Topic
                       </TableCell>
@@ -282,7 +322,10 @@ const TopicManagerComponent = () => {
                         return (
                           <TableRow key={currentTopic.id_topic}>
                             <TableCell align="center">
-                              {currentTopic.topic_name}
+                              {currentTopic.id_topic}
+                            </TableCell>
+                            <TableCell align="center">
+                              { currentTopic.topic_name[0].toUpperCase() + currentTopic.topic_name.slice(1)}
                             </TableCell>
                             <TableCell align="center">
                               <button

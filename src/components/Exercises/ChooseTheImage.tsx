@@ -51,7 +51,6 @@ const ChooseTheImage = ({
   setOfWords:IWord[],
   onSendAnswer:any
 }) => {
-
   const [topics, setTopics] = useState<ITopic>(initialTopic);
   const [wordClasses, setWordClasses] = useState<IWord_class>(initialWordClass);
   const [attempt, setAttempt] = useState<string>("");
@@ -123,6 +122,7 @@ const ChooseTheImage = ({
     if(currentWord.meanings[0].id_meaning === wordSelected.meanings[0].id_meaning) {
       onSendAnswer();
       setStrike(false);
+      setWordSelected(initialWord);
     } else {
       setStrike(true);
     }
@@ -141,11 +141,17 @@ const ChooseTheImage = ({
         <div className='flex flex-row justify-around'>
           <div>
             <span className='mr-3'>Word classification:</span>
-            <span className='italic mr-3'>{ wordClasses.word_class }</span>
+            <span className='italic'>{ 
+              wordClasses.id_word_class !== 0 &&
+              wordClasses.word_class[0].toUpperCase() + wordClasses.word_class.slice(1)
+            }</span>
           </div>
-          <div>
+          <div className='ml-3'>
             <span className='mr-3'>Group:</span>
-            <span className='italic'>{ topics.topic_name }</span>
+            <span className='italic'>{ 
+            topics.id_topic !== 0 &&
+              topics.topic_name[0].toUpperCase() + topics.topic_name.slice(1)
+            }</span>
           </div>
         </div>
         { strike &&

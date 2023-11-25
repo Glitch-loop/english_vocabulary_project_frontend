@@ -3,7 +3,8 @@ import requester from "../../helpers/Requester";
 import { EAlert } from "../../Interfaces/enums";
 import { enqueueAlert } from "../../redux/slices/appSlice";
 import { Dispatch, AnyAction } from 'redux';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../../redux/store';
 import { IExample, IMeaning, IRequest, ITopic, IWord, IWord_class } from "../../Interfaces/interfaces";
 
 import Table from '@mui/material/Table';
@@ -20,6 +21,8 @@ import SearchTopic from '../Searchers/SearchTopic';
 import SearchWord from '../Searchers/SearchWord';
 import SearchWordClasses from '../Searchers/SearchWordClasses';
 import { failedResponse } from '../../utils/genericResponses';
+import { AnimatePresence } from 'framer-motion';
+import ToastAlert from '../UIcomponents/ToastAlert';
 
 const initialWord:IWord = {
   id_word: 0,
@@ -68,6 +71,7 @@ const WordManagerComponent = () => {
   
   //Reducers to alerts
   const dispatch:Dispatch<AnyAction> = useDispatch();
+  const appData = useSelector((state: RootState) => state.appReducer);
 
   // Calls to API
   const addWord = async (newWord: IWord):Promise<IWord[]> => {
@@ -224,18 +228,20 @@ const WordManagerComponent = () => {
     }
   }
 
-  const addMeaning = async (newWord: IMeaning):Promise<IRequest<IMeaning>> => {
+  const addMeaning = async (newMeaning: IMeaning):Promise<IRequest<IMeaning>> => {
     const failedResponse:IRequest<IMeaning> = {
       success: false,
       response: {
         statusCode: 500
       }
     }
+
     try {
+      console.log(newMeaning)
       const word: IRequest<IMeaning> = await requester({
         url: `/meanings`,
         method: 'POST',
-        data: newWord
+        data: newMeaning
       })
       
       if(word.response.statusCode === 200) 
@@ -426,13 +432,18 @@ const WordManagerComponent = () => {
       setWord({...word, 
         meanings: [...word.meanings, newMeaning]
       });
-      setMeaning(initialMeaning);
+
+      // Restart configuration for new meanings
+      setMeaning({...initialMeaning, id_word: meaning.id_word});
+      setTopic(initialTopic);
+      setWordClasses(initialWordClass);
+
     }
   }
   const handleOnDeleteMeaning = async (meaningSelected:IMeaning):Promise<void> => {
     const response = await deleteMeaning(meaningSelected);
     if(response.success === true) {
-      resetMeaning();
+      resetMeaning(0);
       setWord({...word, 
         meanings: word.meanings
         .filter(currentMeaning => 
@@ -492,8 +503,8 @@ const WordManagerComponent = () => {
     setWordClasses(initialWordClass);
   }
 
-  const resetMeaning = ():void => {
-    setMeaning(initialMeaning);
+  const resetMeaning = (currentWord:number):void => {
+    setMeaning({...initialMeaning, id_word: currentWord});
     setExample(initialExample);
     setTopic(initialTopic);
     setWordClasses(initialWordClass);
@@ -507,14 +518,23 @@ const WordManagerComponent = () => {
 
   return(
       <div className='flex flex-col overflow-y-auto max-h-full'>
+        <AnimatePresence mode='wait'>
+          { appData.currentAlert &&
+            <ToastAlert alertData={appData.currentAlert}/>
+          }
+        </AnimatePresence>        
         <div className='flex flex-col my-6'>
           <div className='flex flex-row justify-center mb-5'>
             <SearchWord onSelectItem={(item:IWord) => {
               getWordById(item).then((response:IWord[]) => {
-                resetMeaning()
                 setWord(response[0]);
               })
-              setMeaning({...meaning, id_word: item.id_word})
+              //Setting to add a new meaning
+              setMeaning({...initialMeaning, id_word: item.id_word});
+              setExample(initialExample);
+              setTopic(initialTopic);
+              setWordClasses(initialWordClass);
+              setManageMeaning(false);
             }} />
           </div>
           <div className="flex flex-col justify-center">
@@ -573,8 +593,7 @@ const WordManagerComponent = () => {
                 name="meaning" 
                 placeholder="Meaning"
                 value={meaning.meaning} 
-                onChange={(e):any => { 
-                  setMeaning({...meaning, meaning: e.target.value}) }}
+                onChange={(e):any => { setMeaning({...meaning, meaning: e.target.value}) }}
                 />
             </div>
             <div className='mt-6 w-full flex flex-row justify-center'>
@@ -611,6 +630,7 @@ const WordManagerComponent = () => {
                 initialValue={wordClasses}
                />
             </div>
+            {/* Meaning actions  */}
             <div className='flex flex-row justify-center'>
               { !manageMeaning ?
                 <Button variant="contained" color="success" onClick={():any => {
@@ -625,7 +645,7 @@ const WordManagerComponent = () => {
                     Update meaning
                   </Button>
                   <Button variant="contained" color="info" onClick={():any => {
-                  resetMeaning()
+                  resetMeaning(meaning.id_word)
                   }}>
                     Cancel
                   </Button>
@@ -748,78 +768,81 @@ const WordManagerComponent = () => {
               {/* Meanings of the word */}
               </div>
             }
+            {/* Current meanings for a word */}
             <div className='mt-6 flex flex-row justify-center'>
               <div className='max-w-3xl'>
                 { word.meanings[0] !== undefined ?
-                  <Paper sx={{overflow: 'hidden'}}>
-                    <TableContainer sx={{ maxHeight: 220 }}>
-                      <Table>
-                        <TableHead>
-                          <TableRow>
-                            <TableCell align="center">
-                              Other meanings of the word
-                            </TableCell>
-                            <TableCell align="center">
-                              Update meaning
-                            </TableCell>
-                            <TableCell align="center">
-                              Delete meaning
-                            </TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {
-                            word.meanings.map(currentMeaning => {
-                              return (
-                                <TableRow key={currentMeaning.id_meaning}>
-                                  <TableCell align="center">
-                                    {currentMeaning.meaning}
-                                  </TableCell>
-                                  <TableCell align="center">
-                                    <button
-                                      onClick={() => {
-                                        getMeaningById(currentMeaning)
-                                        .then((response) => {
-                                          getTopicByID(currentMeaning)
-                                          .then((responseTopic)=> {
-                                            setTopic(responseTopic);
-                                          })
+                  <>
+                    <div className='text-lg font-bold text-center'>Meanings registered for this word</div>
+                    <Paper sx={{overflow: 'hidden'}}>
+                      <TableContainer sx={{ maxHeight: 220 }}>
+                        <Table>
+                          <TableHead>
+                            <TableRow>
+                              <TableCell align="center">
+                                Other meanings of the word
+                              </TableCell>
+                              <TableCell align="center">
+                                Update meaning
+                              </TableCell>
+                              <TableCell align="center">
+                                Delete meaning
+                              </TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {
+                              word.meanings.map(currentMeaning => {
+                                return (
+                                  <TableRow key={currentMeaning.id_meaning}>
+                                    <TableCell align="center">
+                                      {currentMeaning.meaning}
+                                    </TableCell>
+                                    <TableCell align="center">
+                                      <button
+                                        onClick={() => {
+                                          getMeaningById(currentMeaning)
+                                          .then((response) => {
+                                            getTopicByID(currentMeaning)
+                                            .then((responseTopic)=> {
+                                              setTopic(responseTopic);
+                                            })
 
-                                          getWordClassByID(currentMeaning)
-                                          .then((responseTopic)=> {
-                                            console.log(responseTopic);
-                                            setWordClasses(responseTopic);
+                                            getWordClassByID(currentMeaning)
+                                            .then((responseTopic)=> {
+                                              setWordClasses(responseTopic);
+                                            })
+                                            
+                                            setMeaning(response[0]);
+                                            setExample({...example, id_meaning: currentMeaning.id_meaning});
+                                            setManageMeaning(true);
                                           })
-
-                                          setMeaning(response[0]);
-                                          setExample({...example, id_meaning: currentMeaning.id_meaning});
-                                          setManageMeaning(true);
-                                        })
-                                        }}>
-                                      <div className="text-2xl">
-                                        <MdEditDocument />
-                                      </div>
-                                  </button>
-                                  </TableCell>
-                                  <TableCell align="center">
-                                    <button
-                                      onClick={() => {
-                                        handleOnDeleteMeaning(currentMeaning)
-                                      }}
-                                      >
-                                      <div className="text-2xl">
-                                        <MdDeleteForever />
-                                      </div>
+                                          }}>
+                                        <div className="text-2xl">
+                                          <MdEditDocument />
+                                        </div>
                                     </button>
-                                  </TableCell>
-                                </TableRow>
-                              )
-                            }) 
-                          }
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </Paper>
+                                    </TableCell>
+                                    <TableCell align="center">
+                                      <button
+                                        onClick={() => {
+                                          handleOnDeleteMeaning(currentMeaning)
+                                        }}
+                                        >
+                                        <div className="text-2xl">
+                                          <MdDeleteForever />
+                                        </div>
+                                      </button>
+                                    </TableCell>
+                                  </TableRow>
+                                )
+                              }) 
+                            }
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    </Paper>
+                  </>
                   :
                   <p className=' text-center font-bold italic'>
                     The word still has no meanings.

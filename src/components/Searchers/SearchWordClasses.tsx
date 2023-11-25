@@ -111,7 +111,7 @@ const SearchWordClasses = (
 
   const selectOption = async (event: any, optionSelected: string|null):Promise<void> => {
     const findDataItem:undefined|IWord_class = storeResponseSearchItem
-      .find(item => item.word_class === optionSelected);
+      .find(item => item.word_class.toLowerCase() === optionSelected?.toLocaleLowerCase());
     
     if(findDataItem !== undefined) {
       //User selected an item
@@ -137,9 +137,13 @@ const SearchWordClasses = (
           onChange={(event: any, newValue: string | null) => 
             { selectOption(event, newValue) }}
           value={
-            initialValue.word_class
+            initialValue.word_class.length > 0 ?
+              initialValue.word_class[0].toUpperCase() + initialValue.word_class.slice(1):
+              initialValue.word_class            
           }
-          options={ searchItem.map((item => item.word_class)) }
+          options={ searchItem.map((item => 
+            item.word_class[0].toUpperCase() + item.word_class.slice(1)
+            )) }
           sx={{ width: 300 }}
           renderInput={(params) => <TextField {...params} label="Search word class" />}
           />
