@@ -41,13 +41,17 @@ const getSetToPlay = (amountSet:number, maximumValue:number, currentIndex:number
   const setWordsToPlay:IWord[] = [];
   const usedNumbers:number[] = [];
 
-  const positionCorrectAnswer:number = randomNumber(amountSet - 1);
+  const positionCorrectAnswer:number = randomNumber(amountSet - 1) - 1;
   console.log("Correct answer: ", currentIndex)
-  console.log("Correct answer: ", positionCorrectAnswer - 1)
+  console.log("Position answer: ", positionCorrectAnswer - 1)
   let index:number = 0;
   while(index < amountSet) {
     
     let newNumber = randomNumber(maximumValue);
+    console.log("index: ", index)
+    console.log("positionCorrectAnswer: ", positionCorrectAnswer)
+    console.log("Correct answer", positionCorrectAnswer === index)
+
     if(positionCorrectAnswer === index) { // This position is reserved for the correct answer
       setWordsToPlay.push(setOfWords[currentIndex]);
       index++;
@@ -59,7 +63,7 @@ const getSetToPlay = (amountSet:number, maximumValue:number, currentIndex:number
       }
     }
   }
-  // console.log("Word selected: ", setWordsToPlay)
+  console.log("Word selected: ", setWordsToPlay)
   return setWordsToPlay;
 }
 
@@ -85,7 +89,7 @@ const ExercisesComponent = () => {
         "idTopic": topics.id_topic, 
         "idWordClass": wordClasses.id_word_class, 
         "lessStudiedWord": lessStudiedWords, 
-        "numberWords": numberWords
+        "numberWords": numberWords < 10 ? 10 : numberWords
       }
       const word: IRequest<IWord[]> = await requester({
         url: `/activities`,

@@ -237,7 +237,7 @@ const WordManagerComponent = () => {
     }
 
     try {
-      console.log(newMeaning)
+
       const word: IRequest<IMeaning> = await requester({
         url: `/meanings`,
         method: 'POST',
@@ -517,7 +517,7 @@ const WordManagerComponent = () => {
   }
 
   return(
-      <div className='flex flex-col overflow-y-auto max-h-full'>
+      <div className='flex flex-col overflow-y-auto overscroll-auto max-h-full'>
         <AnimatePresence mode='wait'>
           { appData.currentAlert &&
             <ToastAlert alertData={appData.currentAlert}/>
