@@ -9,7 +9,7 @@ import { Button } from "@mui/material";
 import * as XLSX from 'xlsx'; 
 import SearchTopic from "../Searchers/SearchTopic";
 import SearchWordClasses from "../Searchers/SearchWordClasses";
-import { addExample, addMeaning, addWord, getTopicByID, getWordClassByID } from "../../services/backend_api";
+import { addExample, addMeaning, addWord, getTopicByID, getWordClassByID, searchWordName } from "../../services/backend_api";
 import { initialTopic, initialImportWordExcel, initialWordClass, emptyOrUndefined } from "../../utils/utils";
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -133,6 +133,8 @@ const AddWordsExcel = () => {
   }
 
   const handleAddWord = async () => {
+    let wordRepited = false;
+
     // Verify all the data 
     if(
       emptyOrUndefined(data[indexWord].word) ||
@@ -147,48 +149,63 @@ const AddWordsExcel = () => {
         word: data[indexWord].word,
         meanings: []
       }
-      const responseWord = await addWord(newWord)
 
-      if(responseWord.response.statusCode === 200
-        && responseWord.response.response !== undefined) {
-        const newMeaning:IMeaning = {
-          id_meaning: 0,
-          meaning: data[indexWord].meaning,
-          source: graphicSource,
-          recently_practiced: 0,
-          times_practiced: 0,
-          id_word: responseWord.response.response.id_word,
-          id_word_class: wordClass.id_word_class,
-          id_topic: topic.id_topic,
-          examples: []
-        }
-        const responseMeaning = await addMeaning(newMeaning)
+      //Verifying that word already exists
+      const wordsInDatabase:IWord[] = await searchWordName(newWord.word);
+
+      wordsInDatabase.forEach(currentWord => {
+        if(currentWord.word.toLowerCase() == newWord.word.toLowerCase()) {
+          wordRepited = true;
+        } else { /* Do Nothing */ }
+      });
+
+
+      if(wordRepited == false) {
+        const responseWord = await addWord(newWord)
   
-        if(responseMeaning.response.statusCode === 200
-        && responseMeaning.response.response !== undefined) {
-          arrExamples.forEach(example => {
-            const newExample:IExample = {
-              id_example: 0,
-              example: example.example,
-              id_meaning: responseMeaning.response.response!.id_meaning
-            }
-            addExample(newExample)
-          })
+        if(responseWord.response.statusCode === 200
+          && responseWord.response.response !== undefined) {
+          const newMeaning:IMeaning = {
+            id_meaning: 0,
+            meaning: data[indexWord].meaning,
+            source: graphicSource,
+            recently_practiced: 0,
+            times_practiced: 0,
+            id_word: responseWord.response.response.id_word,
+            id_word_class: wordClass.id_word_class,
+            id_topic: topic.id_topic,
+            examples: []
+          }
+          const responseMeaning = await addMeaning(newMeaning)
+    
+          if(responseMeaning.response.statusCode === 200
+          && responseMeaning.response.response !== undefined) {
+            arrExamples.forEach(example => {
+              const newExample:IExample = {
+                id_example: 0,
+                example: example.example,
+                id_meaning: responseMeaning.response.response!.id_meaning
+              }
+              addExample(newExample)
+            })
+          }
         }
+        // Go to the next word to add
+        verifyEndProcess(false, wordsForReview);
+      } else {
+        // The word already exists.
+        // The word is added to the excel "wordForReview", for a revision.
+        handleNextWord();
       }
-  
-      // Go to the next word to add
-      verifyEndProcess(false);
     }
   }
 
   const handleNextWord = async() => {
-    setWordsForReview([...wordsForReview, data[indexWord]]);
-    verifyEndProcess(false);
+    verifyEndProcess(false, [...wordsForReview, data[indexWord]]);
   }
 
   const handleOnCancelTheProcess = async() => {
-    verifyEndProcess(true);
+    verifyEndProcess(true, [...wordsForReview, data[indexWord]]);
   }
 
   //Auxiliar functions 
@@ -202,7 +219,7 @@ const AddWordsExcel = () => {
     setCurrentExample("");
   }
 
-  const verifyEndProcess = async (endManuallyTheProcess:boolean) => {
+  const verifyEndProcess = async (endManuallyTheProcess:boolean, arrWordReview:IImportWordExcel[]) => {
     const index = indexWord + 1;
     const remainingWord:IImportWordExcel[] = [];
     //End process manually
@@ -219,8 +236,9 @@ const AddWordsExcel = () => {
       if(wordsForReview.length > 0 || remainingWord.length > 0) {
         const rows:any[][] = [excelHeaders]; 
 
-        // Add the words that the user skip
-        wordsForReview.forEach(currentWord => {
+        console.log(wordsForReview)
+        // Add the words that the user skipped
+        arrWordReview.forEach(currentWord => {
           const dataRow:any[] = [
             currentWord.word, 
             currentWord.meaning, 
@@ -255,9 +273,10 @@ const AddWordsExcel = () => {
       }
     } else {
 
-      // There still are words
+      // There are still words
       setIndexWord(index);
       setUpNewWord(index, data);
+      setWordsForReview(arrWordReview);
     }
   }
 

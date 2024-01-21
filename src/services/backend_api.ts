@@ -144,6 +144,24 @@ const getWordById = async (wordToGet: IWord):Promise<IRequest<IWord[]>> => {
   }
 }
 
+const searchWordName = async(string_to_search: string):Promise<IWord[]> => {
+  try {
+    const response:IRequest<IWord[]> = await requester({
+      url: `/words/search/${string_to_search}`,
+      method: 'GET'
+    })
+    if(response.response !== undefined) {
+      if(response.response.response !== undefined) {      
+        return response.response.response;
+      } 
+    }
+
+    return [];
+  } catch (error) {
+    return [];
+  }
+}
+
 const addMeaning = async (newMeaning: IMeaning):Promise<IRequest<IMeaning>> => {
   try {
     const word: IRequest<IMeaning> = await requester({
@@ -230,6 +248,7 @@ export {
   updateWord,
   deleteWord,
   getWordById,
+  searchWordName,
   addMeaning,
   deleteMeaning,
   getMeaningById,
