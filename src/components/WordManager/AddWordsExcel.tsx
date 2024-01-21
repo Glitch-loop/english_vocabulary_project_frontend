@@ -205,7 +205,7 @@ const AddWordsExcel = () => {
   }
 
   const handleOnCancelTheProcess = async() => {
-    verifyEndProcess(true, [...wordsForReview, data[indexWord]]);
+    verifyEndProcess(true, wordsForReview);
   }
 
   //Auxiliar functions 
